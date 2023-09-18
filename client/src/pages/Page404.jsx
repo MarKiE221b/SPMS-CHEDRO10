@@ -12,7 +12,7 @@ const Page404 = () => {
             </div>
             <div className="flex items-center w-full mt-6 gap-x-3 shrink-0 sm:w-auto">
               <Link to="/">
-                <button className="flex items-center justify-center w-1/2 px-5 py-2 text-sm text-gray-700 transition-colors duration-200 bg-white border rounded-lg gap-x-2 sm:w-auto  hover:bg-gray-100 ">
+                <button className="flex items-center justify-center w-1/2 px-5 py-2 text-sm text-gray-700 transition-colors duration-200 bg-white border rounded-lg gap-x-2 sm:w-auto  hover:bg-gray-300 ">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"

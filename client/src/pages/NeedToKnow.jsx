@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const NeedToKnow = () => {
   return (
     <div className="flex flex-col items-center md:mx-12 p-10 bg-white border border-gray-300 rounded-lg shadow-xl max-h-full overflow-y-auto">
@@ -29,7 +31,7 @@ const NeedToKnow = () => {
           Certificates of Program Compliance (COPC).
         </p>
         <h1 className="font-bold">B. ELIGIBILITY REQUIREMENTS</h1>
-        <p className="mb-4">
+        <span className="mb-4">
           Student-applicants must comply with the following requirements for the
           scholarship grant and be uploaded to the student-applicant designated
           portal account preferably in PDF format:
@@ -82,7 +84,7 @@ const NeedToKnow = () => {
               </ul>
             </li>
           </ul>
-        </p>
+        </span>
         <h1 className="font-bold">C. FINANCIAL ASSISTANCE</h1>
         <p className="mb-4">
           The financial assistance will cover the tuition and other school fees
@@ -247,12 +249,14 @@ const NeedToKnow = () => {
         </p>
       </div>
       <div>
-        <button
-          type="button"
-          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-2xl text-sm px-5 py-2.5 mr-2 mb-2 focus:outline-none"
-        >
-          PROCEED TO APPLICATION
-        </button>
+        <Link to="/terms">
+          <button
+            type="button"
+            className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-2xl text-sm px-5 py-2.5 mr-2 mb-2 focus:outline-none"
+          >
+            PROCEED TO APPLICATION
+          </button>
+        </Link>
       </div>
     </div>
   );
