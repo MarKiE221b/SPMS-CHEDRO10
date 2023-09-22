@@ -3,12 +3,15 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { TextField } from "@mui/material";
-import { GenderItem, AddressItems } from "../hardcoded_data/ItemData";
+import { GenderItem } from "../hardcoded_data/ItemData";
 import InputAdornment from "@mui/material/InputAdornment";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
+import { useQuery } from "react-query";
+import CircularProgress from "@mui/material/CircularProgress";
+import axios from "axios";
 
 const Forms = () => {
   const [toggleState, setToggleState] = useState(1);
@@ -16,34 +19,75 @@ const Forms = () => {
     setToggleState(index);
   };
 
-  const [sex, setSex] = useState("");
+  const [sex, setSex] = useState(undefined);
+  const [provCode, setProvCode] = useState(undefined);
+  const [cityCode, setCityCode] = useState(undefined);
+  const [barangayCode, setBarangayCode] = useState(undefined);
+
+  const config = {
+    header: {
+      "X-Content-Type-Options": "nosniff",
+    },
+  };
+
+  const { status, data: provinces } = useQuery(
+    "provinces",
+    () =>
+      axios
+        .get("https://psgc.gitlab.io/api/regions/100000000/provinces/", config)
+        .then((response) => response.data),
+    {
+      staleTime: Infinity, // Cache the data indefinitely
+    }
+  );
+
+  const { data: cities } = useQuery(
+    ["cities", provCode],
+    () =>
+      axios
+        .get(
+          `https://psgc.gitlab.io/api/provinces/${provCode}/cities-municipalities/`,
+          config
+        )
+        .then((response) => response.data),
+    {
+      enabled: !!provCode,
+    }
+  );
+
+  const { data: barangays } = useQuery(
+    ["cities", cityCode],
+    () =>
+      axios
+        .get(
+          `https://psgc.gitlab.io/api/cities-municipalities/${cityCode}/barangays/`,
+          config
+        )
+        .then((response) => response.data),
+    {
+      enabled: !!cityCode,
+    }
+  );
+
+  const handleProvChange = (e) => {
+    setProvCode(e.target.value);
+    setCityCode(undefined);
+  };
+
+  const handleCityChange = (e) => {
+    setCityCode(e.target.value);
+    setBarangayCode(undefined);
+  };
+
+  const handleBarangayChange = (e) => {
+    setBarangayCode(e.target.value);
+  };
+
   const handleChange = (event) => {
     setSex(event.target.value);
   };
 
-  const [province, setProvince] = useState("");
-  const [city, setCity] = useState("");
-  const [barangay, setBarangay] = useState("");
-  const [cities, setCities] = useState([]);
-  const [barangays, setBarangays] = useState([]);
-
-  const handleProvinceChange = (event) => {
-    setProvince(event.target.value);
-    setCities(
-      AddressItems.find((prov) => prov.name === event.target.value).cities
-    );
-  };
-
-  const handleCityChange = (event) => {
-    setCity(event.target.value);
-    setBarangays(
-      cities.find((city) => city.name === event.target.value).barangays
-    );
-  };
-
-  const handleBarangayChange = (event) => {
-    setBarangay(event.target.value);
-  };
+  if (status === "loading") return <CircularProgress />;
   return (
     <>
       <div className="text-2xl font-bold text-center">
@@ -90,50 +134,70 @@ const Forms = () => {
         </div>
 
         <div className="py-5">
-          <form>
+          <form id="form">
             <div className="text-lg font-medium">
               <span>Name</span>
               <div className="grid gap-6 md:grid-cols-4 md:gap-6 my-6">
                 <div>
-                  <InputLabel>Last Name*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Last Name"
+                    required
+                    fullWidth
+                  />
                 </div>
 
                 <div>
-                  <InputLabel>First Name*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="First Name"
+                    required
+                    fullWidth
+                  />
                 </div>
 
                 <div>
-                  <InputLabel>Middle Name*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Middle Name"
+                    required
+                    fullWidth
+                  />
                 </div>
 
                 <div>
-                  <InputLabel>Maiden Name</InputLabel>
-                  <TextField id="outlined-required-text" fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Maiden Name"
+                    fullWidth
+                  />
                 </div>
 
                 <div>
-                  <InputLabel>Place of Birth*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Place of Birth"
+                    required
+                    fullWidth
+                  />
                 </div>
 
                 <div>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <div>
-                      <InputLabel>Birthday*</InputLabel>
-                      <DatePicker />
+                      <DatePicker label="Birthday" />
                     </div>
                   </LocalizationProvider>
                 </div>
 
                 <div>
-                  <InputLabel id="sex">Sex*</InputLabel>
                   <FormControl required fullWidth>
+                    <InputLabel id="sexLabel" htmlFor="selectSex">Sex</InputLabel>
                     <Select
-                      labelId="sex"
-                      id="Select"
+                      id="selectSex"
+                      labelId="sexLabel"
+                      label="Sex"
+                      defaultValue=""
                       value={sex}
                       onChange={handleChange}
                     >
@@ -147,15 +211,19 @@ const Forms = () => {
                 </div>
 
                 <div>
-                  <InputLabel>Civil Status*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Civil Status"
+                    required
+                    fullWidth
+                  />
                 </div>
               </div>
               <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
                 <div>
-                  <InputLabel>Mobile Number*</InputLabel>
                   <TextField
                     id="outlined-start-adornment"
+                    label="Mobile Number"
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">+63</InputAdornment>
@@ -166,8 +234,12 @@ const Forms = () => {
                   />
                 </div>
                 <div>
-                  <InputLabel>Email Address*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Email Address"
+                    required
+                    fullWidth
+                  />
                 </div>
               </div>
             </div>
@@ -175,16 +247,19 @@ const Forms = () => {
               <span>Address</span>
               <div className="grid gap-6 md:grid-cols-5 md:gap-6 my-6">
                 <div>
-                  <InputLabel>Province*</InputLabel>
                   <FormControl required fullWidth>
+                    <InputLabel id="provinceLabel" htmlFor="selectProvince">Province</InputLabel>
                     <Select
-                      id="Select"
-                      value={province}
-                      onChange={handleProvinceChange}
+                      id="selectProvince"
+                      labelId="provinceLabel"
+                      label="Province"
+                      defaultValue=""
+                      value={provCode}
+                      onChange={handleProvChange}
                     >
-                      {AddressItems.map((prov) => (
-                        <MenuItem key={prov.code} value={prov.name}>
-                          {prov.name}
+                      {provinces?.map((provinces) => (
+                        <MenuItem key={provinces.code} value={provinces.code}>
+                          {provinces.name}
                         </MenuItem>
                       ))}
                     </Select>
@@ -192,66 +267,78 @@ const Forms = () => {
                 </div>
 
                 <div>
-                  <InputLabel>City*</InputLabel>
                   <FormControl required fullWidth>
+                    <InputLabel id="cityLabel" htmlFor="selectCity">City</InputLabel>
                     <Select
-                      id="Select"
-                      value={city}
+                      id="selectCity"
+                      labelId="cityLabel"
+                      label="City"
+                      defaultValue=""
+                      value={cityCode}
                       onChange={handleCityChange}
                     >
-                      {cities.map((city) => (
-                        <MenuItem key={city.code} value={city.name}>
-                          {city.name}
+                      {cities?.map((cities) => (
+                        <MenuItem key={cities.code} value={cities.code}>
+                          {cities.name}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </div>
                 <div>
-                  <InputLabel>Barangay*</InputLabel>
                   <FormControl required fullWidth>
+                    <InputLabel id="barangayLabel" htmlFor="selectBarangay">Barangay</InputLabel>
                     <Select
-                      id="Select"
-                      value={barangay}
+                      id="selectBarangay"
+                      labelId="barangayLabel"
+                      label="Barangay"
+                      defaultValue=""
+                      value={barangayCode}
                       onChange={handleBarangayChange}
                     >
-                      {barangays.map((bar) => (
-                        <MenuItem key={bar.code} value={bar.name}>
-                          {bar.name}
+                      {barangays?.map((barangays) => (
+                        <MenuItem key={barangays.code} value={barangays.code}>
+                          {barangays.name}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </div>
                 <div>
-                  <InputLabel>Zip Code*</InputLabel>
                   <FormControl required fullWidth>
+                    <InputLabel id="zipLabel" htmlFor="selectZip">Zip Code</InputLabel>
                     <Select
-                      id="Select"
-                      value={barangay}
-                      onChange={handleBarangayChange}
-                    >
-                      {barangays.map((bar) => (
-                        <MenuItem key={bar.code} value={bar.name}>
-                          {bar.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
+                      id="selectZip"
+                      labelId="zipLabel"
+                      label="Zip Code"
+                    ></Select>
                   </FormControl>
                 </div>
                 <div>
-                  <InputLabel>Street*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Street"
+                    required
+                    fullWidth
+                  />
                 </div>
               </div>
               <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
                 <div>
-                  <InputLabel>Permanent Address*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Permanent Address"
+                    required
+                    fullWidth
+                  />
                 </div>
                 <div>
-                  <InputLabel>Current Address*</InputLabel>
-                  <TextField id="outlined-required-text" required fullWidth />
+                  <TextField
+                    id="outlined-required-text"
+                    label="Current Address"
+                    required
+                    fullWidth
+                  />
                 </div>
               </div>
 
@@ -259,47 +346,55 @@ const Forms = () => {
                 <span>Previous School</span>
                 <div className="grid gap-6 md:grid-cols-4 md:gap-6 my-6">
                   <div>
-                    <InputLabel>Name of school last attended*</InputLabel>
-                    <TextField id="outlined-required-text" required fullWidth />
+                    <TextField
+                      id="outlined-required-text"
+                      label="Name of school last attended"
+                      required
+                      fullWidth
+                    />
                   </div>
                   <div>
-                    <InputLabel>School Address*</InputLabel>
-                    <TextField id="outlined-required-text" required fullWidth />
+                    <TextField
+                      id="outlined-required-text"
+                      label="School Address"
+                      required
+                      fullWidth
+                    />
                   </div>
                   <div>
-                    <InputLabel>School Sector*</InputLabel>
                     <FormControl required fullWidth>
+                      <InputLabel id="schoolSId" htmlFor="selectSchoolS">School Sector</InputLabel>
                       <Select
-                        id="Select"
-                        value={barangay}
-                        onChange={handleBarangayChange}
-                      >
-                        {barangays.map((bar) => (
-                          <MenuItem key={bar.code} value={bar.name}>
-                            {bar.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
+                        id="selectSchoolS"
+                        labelId="schoolSId"
+                        label="School Sector"
+                      ></Select>
                     </FormControl>
                   </div>
                   <div>
-                    <InputLabel>Highest Attainded Grade/Year*</InputLabel>
-                    <TextField id="outlined-required-text" required fullWidth />
+                    <TextField
+                      id="outlined-required-text"
+                      label="Highest Attainded Grade/Year"
+                      required
+                      fullWidth
+                    />
                   </div>
                 </div>
 
                 <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
                   <div>
-                    <InputLabel>
-                      Type of Disability <span>(if applicable)</span>
-                    </InputLabel>
-                    <TextField id="outlined-required-text" required fullWidth />
+                    <TextField
+                      id="outlined-required-text"
+                      label="Type of Disability (if applicable)"
+                      fullWidth
+                    />
                   </div>
                   <div>
-                    <InputLabel>
-                      IP Affiliation <span>(if applicable)</span>
-                    </InputLabel>
-                    <TextField id="outlined-required-text" required fullWidth />
+                    <TextField
+                      id="outlined-required-text"
+                      label="IP Affiliationy (if applicable)"
+                      fullWidth
+                    />
                   </div>
                 </div>
               </div>
@@ -307,32 +402,39 @@ const Forms = () => {
                 <span>Preferred School</span>
                 <div className="grid gap-6 md:grid-cols-4 md:gap-6 my-6">
                   <div>
-                    <InputLabel>School intended to enroll in*</InputLabel>
-                    <TextField id="outlined-required-text" required fullWidth />
+                    <TextField
+                      id="outlined-required-text"
+                      label="School intended to enroll in"
+                      required
+                      fullWidth
+                    />
                   </div>
                   <div>
-                    <InputLabel>School Address*</InputLabel>
-                    <TextField id="outlined-required-text" required fullWidth />
+                    <TextField
+                      id="outlined-required-text"
+                      label="School Address"
+                      required
+                      fullWidth
+                    />
                   </div>
                   <div>
-                    <InputLabel>Type of School*</InputLabel>
                     <FormControl required fullWidth>
+                      <InputLabel id="typeId" htmlFor="selectType">Type of School</InputLabel>
                       <Select
-                        id="Select"
-                        value={barangay}
-                        onChange={handleBarangayChange}
-                      >
-                        {barangays.map((bar) => (
-                          <MenuItem key={bar.code} value={bar.name}>
-                            {bar.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
+                        id="selectType"
+                        labelId="typeId"
+                        label="Type of School"
+                        value={undefined}
+                      ></Select>
                     </FormControl>
                   </div>
                   <div>
-                    <InputLabel>Degree Program*</InputLabel>
-                    <TextField id="outlined-required-text" required fullWidth />
+                    <TextField
+                      id="outlined-required-text"
+                      label="Degree Program"
+                      required
+                      fullWidth
+                    />
                   </div>
                 </div>
               </div>
