@@ -10,3 +10,31 @@ export const GenderItem = [
     label: "Female",
   },
 ];
+
+export const CivilStatusItem = [
+  {
+    id: "1",
+    value: "0",
+    label: "Single",
+  },
+  {
+    id: "2",
+    value: "1",
+    label: "Married",
+  },
+  {
+    id: "3",
+    value: "2",
+    label: "Annulled",
+  },
+  {
+    id: "4",
+    value: "3",
+    label: "Separated",
+  },
+  {
+    id: "5",
+    value: "4",
+    label: "Widowed",
+  },
+];
