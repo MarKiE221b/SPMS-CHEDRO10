@@ -39,7 +39,7 @@ export const login = (req, res) => {
           if(err){
            res.json("Auth Error")
           }else{
-            res.json({id: decoded.id, name: decoded.name})
+            res.json({id: decoded.id})
           }
         })
       }

@@ -38,3 +38,30 @@ export const CivilStatusItem = [
     label: "Widowed",
   },
 ];
+
+export const SchoolSectorItem = [
+  {
+    id: "1",
+    value: "0",
+    label: "Public",
+  },
+  {
+    id: "2",
+    value: "1",
+    label: "Private",
+  },
+];
+
+export const SchoolType = [
+  {
+    id: "1",
+    value: "0",
+    label: "Sectarian",
+  },
+  {
+    id: "2",
+    value: "1",
+    label: "Non-Sectarian",
+  }
+]
+
