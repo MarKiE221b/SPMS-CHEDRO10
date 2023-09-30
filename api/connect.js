@@ -4,5 +4,5 @@ export const db = mysql.createConnection({
     host: "localhost",
     user: "root",
     password: "",
-    database: "spmsdb"
+    database: "spms-db"
 })

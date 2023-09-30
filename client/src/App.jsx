@@ -37,7 +37,7 @@ function App() {
     return(
       <>
         <Navbar />
-        <div className="flex items-center justify-center border h-[70vh] md:min-h-screen border-gray-200 rounded-lg shadow-lg m-7 p-7">
+        <div className="flex items-center justify-center h-screen m-4">
           <Outlet />
         </div>
         <Footer />

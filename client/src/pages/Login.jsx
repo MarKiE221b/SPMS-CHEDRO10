@@ -31,7 +31,7 @@ const Login = () => {
   }, [currentUser]);
 
   return (
-    <div className="max-h-full overflow-y-auto w-full max-w-sm p-4 bg-white border border-gray-300 rounded-lg shadow-md sm:p-6 md:p-8">
+    <div className="p-4 w-full max-w-sm bg-white border border-gray-300 rounded-lg shadow-md sm:p-6 md:p-8">
       <form className="space-y-6" onSubmit={handleLogin}>
         <h5 className="text-center text-2xl font-bold text-gray-600">
           SIGN IN

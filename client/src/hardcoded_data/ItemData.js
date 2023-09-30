@@ -52,16 +52,21 @@ export const SchoolSectorItem = [
   },
 ];
 
-export const SchoolType = [
+export const groupPeopleItem = [
   {
     id: "1",
-    value: "0",
-    label: "Sectarian",
+    value: "dependent of solo parent"
   },
   {
     id: "2",
-    value: "1",
-    label: "Non-Sectarian",
-  }
+    value: "senior citizens"
+  },
+  {
+    id: "3",
+    value: "persons with disabilities"
+  },
+  {
+    id: "4",
+    value: "indigenous and ethnic people"
+  },
 ]
-

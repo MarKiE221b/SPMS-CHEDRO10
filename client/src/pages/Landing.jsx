@@ -6,7 +6,7 @@ import Card from "../components/Card.jsx";
 
 const Homepage = () => {
   return (
-    <div className="flex flex-col items-center max-h-full overflow-y-auto">
+    <div>
       <Link to="/needtoknow">
         <Card />
       </Link>

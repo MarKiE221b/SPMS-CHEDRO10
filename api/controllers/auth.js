@@ -17,12 +17,16 @@ export const login = (req, res) => {
     if (!checkPassword)
       return res.status(400).json("Wrong password or username!");
 
-    const token = jwt.sign({ id: data[0].scholar_id }, process.env.REACT_JWT_API_KEY,{expiresIn: "1d"});
+    const token = jwt.sign(
+      { id: data[0].scholar_id },
+      process.env.REACT_JWT_API_KEY,
+      { expiresIn: "1d" }
+    );
 
     const { password, ...others } = data[0];
 
     res
-      .cookie("accessToken", token,{
+      .cookie("accessToken", token, {
         httpOnly: true,
       })
       .status(200)
@@ -30,21 +34,21 @@ export const login = (req, res) => {
   });
 };
 
-  export const getTokenData = (req, res) => {
-      const token = req.cookies.accessToken;
-      if(!token){
-        res.json({message: "No Token"})
-      }else{
-        jwt.verify(token, process.env.REACT_JWT_API_KEY, (err, decoded)=>{
-          if(err){
-           res.json("Auth Error")
-          }else{
-            res.json({id: decoded.id})
-          }
-        })
+export const getTokenData = (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) {
+    res.json({ message: "No Token" });
+  } else {
+    jwt.verify(token, process.env.REACT_JWT_API_KEY, (err, decoded) => {
+      if (err) {
+        res.json("Auth Error");
+      } else {
+        res.json({ id: decoded.id });
       }
-  };
+    });
+  }
+};
 
-  export const logout = (req, res) => {
-    res.clearCookie("accessToken").status(200).json(null);
-  };
+export const logout = (req, res) => {
+  res.clearCookie("accessToken").status(200).json(null);
+};
