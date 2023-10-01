@@ -1,24 +1,22 @@
-import { useState } from "react";
-import { useQuery } from "react-query";
+import { useRef, useState } from "react";
 import {
   GenderItem,
   CivilStatusItem,
   SchoolSectorItem,
   groupPeopleItem,
-} from "../hardcoded_data/ItemData";
+  getCity,
+  getBarangay,
+  getProvince,
+  getHei,
+  getIncome,
+  getGrade,
+} from "../data/ItemData";
+import { FormValidation } from "../functions/FormValidation";
+import AlertBox from "./AlertBox";
 import CircularProgress from "@mui/material/CircularProgress";
 import axios from "axios";
-import { makeRequest } from "../axios";
 
 const Forms = ({ app_id }) => {
-  const [toggleState, setToggleState] = useState("1");
-
-  const toggle = (index) => {
-    setToggleState(index);
-  };
-
-  const [isChecked, setIsChecked] = useState(false);
-
   const [formData, setFormData] = useState({
     appDuration: app_id,
     lName: "",
@@ -41,8 +39,8 @@ const Forms = ({ app_id }) => {
     schoolLastAddr: "",
     schoolSector: "",
     attGrade: "",
-    groupId: "",
     groupPeople: "",
+    specifyGroup: "",
     schoolIntend: "",
     degreeProg: "",
     edAssist: "",
@@ -71,92 +69,54 @@ const Forms = ({ app_id }) => {
     income: "",
     siblings: "",
     DSWD: "",
+    grades: "",
+  });
+
+  const [fileUpload, setFileUpload] = useState({
     imgGrades: null,
     imgFinance: null,
     imgOthers: null,
-    grades: "",
-    points: null,
   });
 
-  const calculatePoints = () => {
-    let c = 0;
-    if (formData.groupId !== "") c = 5;
-    const pointsResult =
-      parseInt(formData.grades, 10) * 0.7 +
-      (parseInt(formData.income, 10) * 0.3 + c);
-    setFormData({ ...formData, points: pointsResult });
+  const provinces = getProvince();
+  const cities = getCity(formData.provCode);
+  const barangays = getBarangay(formData.cityCode, formData.provCode);
+  const heis = getHei();
+  const income = getIncome();
+  const grade = getGrade();
+
+  const tabPaneRef = useRef(null);
+
+  const [isChecked, setIsChecked] = useState(false);
+  const [openAlert, setOpenAlert] = useState(false);
+  const [toggleState, setToggleState] = useState("1");
+
+  const toggle = (index) => {
+    setToggleState(index);
+    tabPaneRef.current.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault;
-    calculatePoints();
+  const handleFileUpload = (e) => {
+    const { name, files } = e.target;
+    setFileUpload({ ...fileUpload, [name]: files[0] });
   };
 
-  const config = {
-    header: {
-      "X-Content-Type-Options": "nosniff",
-    },
+  //submit data
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (FormValidation(formData) === true) {
+      try {
+        await axios.post(
+          "http://localhost:8800/api/application/applicant",
+          formData
+        );
+      } catch (err) {
+        console.log(err.response.data);
+      }
+    } else {
+      setOpenAlert(true);
+    }
   };
-
-  const { status, data: provinces } = useQuery(
-    "provinces",
-    () =>
-      axios
-        .get("https://psgc.gitlab.io/api/regions/100000000/provinces/", config)
-        .then((response) => response.data),
-    {
-      staleTime: Infinity, // Cache the data indefinitely
-    }
-  );
-
-  const { data: cities } = useQuery(
-    ["cities", formData.provCode],
-    () =>
-      axios
-        .get(
-          `https://psgc.gitlab.io/api/provinces/${formData.provCode}/cities-municipalities/`,
-          config
-        )
-        .then((response) => response.data),
-    {
-      enabled: !!formData.provCode,
-    }
-  );
-
-  const { data: barangays } = useQuery(
-    ["cities", formData.cityCode],
-    () =>
-      axios
-        .get(
-          `https://psgc.gitlab.io/api/cities-municipalities/${formData.cityCode}/barangays/`,
-          config
-        )
-        .then((response) => response.data),
-    {
-      enabled: !!formData.cityCode && !!formData.provCode,
-    }
-  );
-
-  const { data: heis } = useQuery("heis", () =>
-    makeRequest
-      .get("/hei/data")
-      .then((response) => response.data)
-      .catch((err) => console.log(err))
-  );
-
-  const { data: income } = useQuery("income", () =>
-    makeRequest
-      .get("/points/income")
-      .then((response) => response.data)
-      .catch((err) => console.log(err))
-  );
-
-  const { data: grade } = useQuery("grade", () =>
-    makeRequest
-      .get("/points/grade")
-      .then((response) => response.data)
-      .catch((err) => console.log(err))
-  );
 
   const handleCheckBox = () => {
     setIsChecked(!isChecked);
@@ -172,19 +132,16 @@ const Forms = ({ app_id }) => {
     setFormData({ ...formData, [name]: value });
   };
 
-  if (status === "loading")
-    return (
-      <div className="flex items-center justify-center">
-        <CircularProgress />;
-      </div>
-    );
+  if (provinces.status === "loading") return <CircularProgress />;
   return (
     <>
-      <div className="text-2xl font-bold text-center">APPLICATION FORM</div>
+      <div ref={tabPaneRef} className="text-2xl font-bold text-center">
+        APPLICATION FORM
+      </div>
       <div className="mt-3 text-red-600 text-sm">
         <p>
-          Instructions: Fill in all the required information. Do not leave an
-          item blank. If item is not applicable, indicate "N/A".
+          Instructions: Fill in all the information. Do not leave an item blank.
+          If item is not applicable, indicate "N/A".
         </p>
       </div>
 
@@ -228,65 +185,62 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-4 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="lNameText"
+                htmlFor="lName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Last Name
+                *Last Name
               </label>
               <input
                 type="text"
-                id="lNameText"
+                id="lName"
                 name="lName"
                 value={formData.lName}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="FNameText"
+                htmlFor="fName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                First Name
+                *First Name
               </label>
               <input
                 type="text"
-                id="FNameText"
+                id="fName"
                 name="fName"
                 value={formData.fName}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="MNameText"
+                htmlFor="mName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Middle Name
+                *Middle Name
               </label>
               <input
                 type="text"
-                id="MNameText"
+                id="mName"
                 name="mName"
                 value={formData.mName}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="MdNameText"
+                htmlFor="maidName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Maiden Name
               </label>
               <input
                 type="text"
-                id="MdNameText"
+                id="maidName"
                 name="maidName"
                 value={formData.maidName}
                 onChange={handleChange}
@@ -295,47 +249,45 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="PbirthText"
+                htmlFor="placeBirth"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Place of Birth
+                *Place of Birth
               </label>
               <input
                 type="text"
-                id="PbirthText"
+                id="placeBirth"
                 name="placeBirth"
                 value={formData.placeBirth}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="birthDate"
+                htmlFor="birthday"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Birthday
+                *Birthday
               </label>
               <input
                 type="date"
-                id="birthDate"
+                id="birthday"
                 name="birthday"
                 value={formData.birthday}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="selectSex"
+                htmlFor="sex"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Sex
+                *Sex
               </label>
               <select
-                id="selectSex"
+                id="sex"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="sex"
                 value={formData.sex}
@@ -343,7 +295,7 @@ const Forms = ({ app_id }) => {
               >
                 <option value="">Choose Sex</option>
                 {GenderItem.map((sex) => (
-                  <option key={sex.id} value={sex.value}>
+                  <option key={sex.id} value={sex.label}>
                     {sex.label}
                   </option>
                 ))}
@@ -351,13 +303,13 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="selectStatus"
+                htmlFor="civilStatus"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Civil Status
+                *Civil Status
               </label>
               <select
-                id="selectStatus"
+                id="civilStatus"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="civilStatus"
                 value={formData.civilStatus}
@@ -365,7 +317,7 @@ const Forms = ({ app_id }) => {
               >
                 <option value="">Choose Status</option>
                 {CivilStatusItem.map((status) => (
-                  <option key={status.id} value={status.value}>
+                  <option key={status.id} value={status.label}>
                     {status.label}
                   </option>
                 ))}
@@ -375,21 +327,20 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="mNumberTel"
+                htmlFor="mobile"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Mobile Number
+                *Mobile Number
               </label>
               <input
                 type="tel"
-                id="mNumberTel"
+                id="mobile"
                 name="mobile"
                 value={formData.mobile}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 placeholder="0951*******"
                 pattern="[0-9]{4}[0-9]{3}[0-9]{4}"
-                required
               />
             </div>
             <div>
@@ -397,7 +348,7 @@ const Forms = ({ app_id }) => {
                 htmlFor="email"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Email Address
+                *Email Address
               </label>
               <input
                 type="email"
@@ -407,7 +358,6 @@ const Forms = ({ app_id }) => {
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 autoComplete="email"
-                required
               />
             </div>
           </div>
@@ -417,20 +367,20 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-4 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="selectProvince"
+                htmlFor="provCode"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Province
+                *Province
               </label>
               <select
-                id="selectProvince"
+                id="provCode"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="provCode"
                 value={formData.provCode}
                 onChange={handleChange}
               >
                 <option value="">Choose Province</option>
-                {provinces?.map((province) => (
+                {provinces.provinces?.map((province) => (
                   <option key={province.code} value={province.code}>
                     {province.name}
                   </option>
@@ -439,13 +389,13 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="selectCity"
+                htmlFor="cityCode"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                City
+                *City
               </label>
               <select
-                id="selectCity"
+                id="cityCode"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="cityCode"
                 value={formData.cityCode}
@@ -461,13 +411,13 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="selectBarangay"
+                htmlFor="barangayCode"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Barangay
+                *Barangay
               </label>
               <select
-                id="selectBarangay"
+                id="barangayCode"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="barangayCode"
                 value={formData.barangayCode}
@@ -483,51 +433,49 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="streetText"
+                htmlFor="zipCode"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Zip Code
+                *Zip Code
               </label>
               <input
                 type="text"
-                id="streetText"
+                id="zipCode"
                 name="zipCode"
                 value={formData.zipCode}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
           </div>
           <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
             <div className="relative">
               <label
-                htmlFor="permaText"
+                htmlFor="permanentAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Permanent Address
+                *Permanent Address
               </label>
               <input
                 type="text"
-                id="permaText"
+                id="permanentAddr"
                 name="permanentAddr"
                 value={formData.permanentAddr}
                 onChange={handleChange}
                 disabled={isChecked}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
 
               <div className="absolute left-32 top-0">
                 <div className="flex items-center">
                   <label
-                    htmlFor="checkBox"
+                    htmlFor="checkbox"
                     className="ml-2 text-xs font-medium text-gray-800 mr-1"
                   >
                     Copy Address
                   </label>
                   <input
-                    id="checkBox"
+                    id="checkbox"
                     type="checkbox"
                     checked={isChecked}
                     onChange={handleCheckBox}
@@ -538,20 +486,19 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="currentText"
+                htmlFor="currentAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Current Address
+                *Current Address
               </label>
               <input
                 type="text"
-                id="currentText"
+                id="currentAddr"
                 name="currentAddr"
                 value={formData.currentAddr}
                 onChange={handleChange}
                 disabled={isChecked}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
           </div>
@@ -561,21 +508,21 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="groupSelect"
+                htmlFor="groupPeople"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Are you belong to: (any of the following groups)?
               </label>
               <select
-                id="groupSelect"
+                id="groupPeople"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                name="groupId"
-                value={formData.groupId}
+                name="groupPeople"
+                value={formData.groupPeople}
                 onChange={handleChange}
               >
                 <option value="">N/A</option>
                 {groupPeopleItem?.map((group) => (
-                  <option key={group.id} value={group.id}>
+                  <option key={group.id} value={group.value}>
                     {group.value}
                   </option>
                 ))}
@@ -583,22 +530,22 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="groupText"
+                htmlFor="specifyGroup"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Please Specify (disabilities or ethnic group)
               </label>
               <input
                 type="text"
-                id="groupText"
-                name="groupPeople"
-                value={formData.groupPeople}
+                id="specifyGroup"
+                name="specifyGroup"
+                value={formData.specifyGroup}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 disabled={
-                  formData.groupId === "1" ||
-                  formData.groupId === "2" ||
-                  formData.groupId === ""
+                  formData.groupPeople === "dependent of solo parent" ||
+                  formData.groupPeople === "senior citizens" ||
+                  formData.groupPeople === ""
                 }
               />
             </div>
@@ -607,47 +554,45 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-4 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="schoolLastText"
+                htmlFor="schoolLast"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Name of School Last Attended
+                *Name of School Last Attended
               </label>
               <input
                 type="text"
-                id="schoolLastText"
+                id="schoolLast"
                 name="schoolLast"
                 value={formData.schoolLast}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="schoolLAddrText"
+                htmlFor="schoolLastAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                School Address
+                *School Address
               </label>
               <input
                 type="text"
-                id="schoolLAddrText"
+                id="schoolLastAddr"
                 name="schoolLastAddr"
                 value={formData.schoolLastAddr}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="selectSchoolSec"
+                htmlFor="schoolSector"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                School Sector
+                *School Sector
               </label>
               <select
-                id="selectSchoolSec"
+                id="schoolSector"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="schoolSector"
                 value={formData.schoolSector}
@@ -655,7 +600,7 @@ const Forms = ({ app_id }) => {
               >
                 <option value="">Choose School Sector</option>
                 {SchoolSectorItem?.map((sector) => (
-                  <option key={sector.id} value={sector.value}>
+                  <option key={sector.id} value={sector.label}>
                     {sector.label}
                   </option>
                 ))}
@@ -663,19 +608,18 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="AttGrade"
+                htmlFor="attGrade"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Highest Attained Grade/Year
+                *Highest Attained Grade/Year
               </label>
               <input
                 type="text"
-                id="AttGrade"
+                id="attGrade"
                 name="attGrade"
                 value={formData.attGrade}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
           </div>
@@ -685,13 +629,13 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="schoolIntendText"
+                htmlFor="schoolIntend"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                School Intended to enroll or enrolled in
+                *School Intended to enroll or enrolled in
               </label>
               <select
-                id="schoolIntendText"
+                id="schoolIntend"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="schoolIntend"
                 value={formData.schoolIntend}
@@ -711,7 +655,7 @@ const Forms = ({ app_id }) => {
                 htmlFor="degreeProg"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Degree Program
+                *Degree Program
               </label>
               <input
                 type="text"
@@ -720,14 +664,13 @@ const Forms = ({ app_id }) => {
                 value={formData.degreeProg}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
           </div>
           <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
             <div className="flex flex-col items-center md:flex-row gap-6">
               <p>
-                Are you enjoying other sources of educational/financial
+                *Are you enjoying other sources of educational/financial
                 assistance?
               </p>
               <div className="flex items-center">
@@ -765,14 +708,14 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="edAssistText"
+                htmlFor="edAssistAdd"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 If yes, please specify:
               </label>
               <input
                 type="text"
-                id="edAssistText"
+                id="edAssistAdd"
                 name="edAssistAdd"
                 value={formData.edAssistAdd}
                 onChange={handleChange}
@@ -813,84 +756,80 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-3 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="FatNameText"
+                htmlFor="fatName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Name
+                *Name
               </label>
               <input
                 type="text"
-                id="FatNameText"
+                id="fatName"
                 name="fatName"
                 value={formData.fatName}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="FAddrText"
+                htmlFor="fAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Address
+                *Address
               </label>
               <input
                 type="text"
-                id="FAddrText"
+                id="fAddr"
                 name="fAddr"
                 value={formData.fAddr}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="FContactText"
+                htmlFor="fContact"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Contact Number
+                *Contact Number
               </label>
               <input
                 type="text"
-                id="FContactText"
+                id="fContact"
                 name="fContact"
                 value={formData.fContact}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 placeholder="0951*******"
                 pattern="[0-9]{4}[0-9]{3}[0-9]{4}"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="FOccupationText"
+                htmlFor="fOccupation"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Occupation
+                *Occupation
               </label>
               <input
                 type="text"
-                id="FOccupationText"
+                id="fOccupation"
                 name="fOccupation"
                 value={formData.fOccupation}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="FEmpNameText"
+                htmlFor="fEmpName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Name of Employer
               </label>
               <input
                 type="text"
-                id="FEmpNameText"
+                id="fEmpName"
                 name="fEmpName"
                 value={formData.fEmpName}
                 onChange={handleChange}
@@ -899,14 +838,14 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="FEmpAddrText"
+                htmlFor="fEmpAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Employeer Address
               </label>
               <input
                 type="text"
-                id="FEmpAddrText"
+                id="fEmpAddr"
                 name="fEmpAddr"
                 value={formData.fEmpAddr}
                 onChange={handleChange}
@@ -915,19 +854,18 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="FEdAttText"
+                htmlFor="fEdAtt"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Highest Eductational Attainment
+                *Highest Eductational Attainment
               </label>
               <input
                 type="text"
-                id="FEdAttText"
+                id="fEdAtt"
                 name="fEdAtt"
                 value={formData.fEdAtt}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
           </div>
@@ -937,84 +875,80 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-3 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="MatNameText"
+                htmlFor="matName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Name
+                *Name
               </label>
               <input
                 type="text"
-                id="MatNameText"
+                id="matName"
                 name="matName"
                 value={formData.matName}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="MAddrText"
+                htmlFor="mAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Address
+                *Address
               </label>
               <input
                 type="text"
-                id="MAddrText"
+                id="mAddr"
                 name="mAddr"
                 value={formData.mAddr}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="MContactText"
+                htmlFor="mContact"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Contact Number
+                *Contact Number
               </label>
               <input
                 type="text"
-                id="MContactText"
+                id="mContact"
                 name="mContact"
                 value={formData.mContact}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 placeholder="0951*******"
                 pattern="[0-9]{4}[0-9]{3}[0-9]{4}"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="MOccupationText"
+                htmlFor="mOccupation"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Occupation
+                *Occupation
               </label>
               <input
                 type="text"
-                id="MOccupationText"
+                id="mOccupation"
                 name="mOccupation"
                 value={formData.mOccupation}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div>
               <label
-                htmlFor="MEmpNameText"
+                htmlFor="mEmpName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Name of Employer
               </label>
               <input
                 type="text"
-                id="MEmpNameText"
+                id="mEmpName"
                 name="mEmpName"
                 value={formData.mEmpName}
                 onChange={handleChange}
@@ -1023,14 +957,14 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="MEmpAddrText"
+                htmlFor="mEmpAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Employeer Address
               </label>
               <input
                 type="text"
-                id="MEmpAddrText"
+                id="mEmpAddr"
                 name="mEmpAddr"
                 value={formData.mEmpAddr}
                 onChange={handleChange}
@@ -1039,19 +973,18 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="MEdAttText"
+                htmlFor="mEdAtt"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Highest Eductational Attainment
+                *Highest Eductational Attainment
               </label>
               <input
                 type="text"
-                id="MEdAttText"
+                id="mEdAtt"
                 name="mEdAtt"
                 value={formData.mEdAtt}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
           </div>
@@ -1063,30 +996,30 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-3 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="GarNameText"
+                htmlFor="gadName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Name
               </label>
               <input
                 type="text"
-                id="GarNameText"
-                name="gatName"
-                value={formData.gatName}
+                id="gadName"
+                name="gadName"
+                value={formData.gadName}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
               />
             </div>
             <div>
               <label
-                htmlFor="GAddrText"
+                htmlFor="gAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Address
               </label>
               <input
                 type="text"
-                id="GAddrText"
+                id="gAddr"
                 name="gAddr"
                 value={formData.gAddr}
                 onChange={handleChange}
@@ -1095,14 +1028,14 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="GContactText"
+                htmlFor="gContact"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Contact Number
               </label>
               <input
                 type="text"
-                id="GContactText"
+                id="gContact"
                 name="gContact"
                 value={formData.gContact}
                 onChange={handleChange}
@@ -1113,14 +1046,14 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="GOccupationText"
+                htmlFor="gOccupation"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Occupation
               </label>
               <input
                 type="text"
-                id="GOccupationText"
+                id="gOccupation"
                 name="gOccupation"
                 value={formData.gOccupation}
                 onChange={handleChange}
@@ -1129,14 +1062,14 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="GEmpNameText"
+                htmlFor="gEmpName"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Name of Employer
               </label>
               <input
                 type="text"
-                id="GEmpNameText"
+                id="gEmpName"
                 name="gEmpName"
                 value={formData.gEmpName}
                 onChange={handleChange}
@@ -1145,14 +1078,14 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="GEmpAddrText"
+                htmlFor="gEmpAddr"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Employeer Address
               </label>
               <input
                 type="text"
-                id="GEmpAddrText"
+                id="gEmpAddr"
                 name="gEmpAddr"
                 value={formData.gEmpAddr}
                 onChange={handleChange}
@@ -1161,14 +1094,14 @@ const Forms = ({ app_id }) => {
             </div>
             <div>
               <label
-                htmlFor="GEdAttText"
+                htmlFor="gEdAtt"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
                 Highest Eductational Attainment
               </label>
               <input
                 type="text"
-                id="GEdAttText"
+                id="gEdAtt"
                 name="gEdAtt"
                 value={formData.gEdAtt}
                 onChange={handleChange}
@@ -1180,18 +1113,17 @@ const Forms = ({ app_id }) => {
           <div className="grid gap-6 md:grid-cols-2 md:gap-6 my-6">
             <div>
               <label
-                htmlFor="selectIncome"
+                htmlFor="income"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Annual Gross Income
+                *Annual Gross Income
               </label>
               <select
-                id="selectIncome"
+                id="income"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="income"
                 value={formData.income}
                 onChange={handleChange}
-                required
               >
                 <option value="">Choose Gross Income</option>
                 {income?.map((income) => (
@@ -1207,7 +1139,7 @@ const Forms = ({ app_id }) => {
                 htmlFor="siblings"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                No. of Siblings in the family 18 years old and below
+                *No. of Siblings in the family 18 years old and below
               </label>
               <input
                 type="text"
@@ -1216,11 +1148,10 @@ const Forms = ({ app_id }) => {
                 value={formData.siblings}
                 onChange={handleChange}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                required
               />
             </div>
             <div className="flex flex-col items-center md:flex-row gap-6">
-              <p>Is your family a beneficiary of the DSWD's (4P's)</p>
+              <p>*Is your family a beneficiary of the DSWD's (4P's)</p>
               <div className="flex items-center">
                 <input
                   id="radioDsYes"
@@ -1307,76 +1238,78 @@ const Forms = ({ app_id }) => {
             <div>
               <label
                 className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="file_input1"
+                htmlFor="imgGrades"
               >
-                Copy of Grades: Grade 11 or 1st Semester Grade 12
+                *Copy of Grades: Grade 11 or 1st Semester Grade 12
               </label>
               <input
                 className="block text-sm text-gray-900 border border-gray-400 cursor-pointer bg-gray-50 focus:outline-none"
-                aria-describedby="file_input1"
-                id="file_input1"
+                aria-describedby="imgGrades"
+                id="imgGrades"
                 type="file"
                 name="imgGrades"
-                accept=".jpeg, .png"
+                accept="image/jpeg, image/png"
+                onChange={handleFileUpload}
               />
-              <p className="mt-1 text-sm text-gray-800" id="file_input1">
+              <p className="mt-1 text-sm text-gray-800">
                 PNG, JPG (MAX. 800x400px).
               </p>
             </div>
             <div>
               <label
                 className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="file_input2"
+                htmlFor="imgFinance"
               >
-                ITR, /Tax Exemption/Certificate of Indigency/Case Study DSWD/OFW
-                Contract
+                *ITR, /Tax Exemption/Certificate of Indigency/Case Study
+                DSWD/OFW Contract
               </label>
               <input
                 className="block text-sm text-gray-900 border border-gray-400 cursor-pointer bg-gray-50 focus:outline-none"
-                aria-describedby="file_input2"
-                id="file_input2"
+                aria-describedby="imgFinance"
+                id="imgFinance"
                 type="file"
                 name="imgFinance"
-                accept=".jpeg, .png"
+                accept="image/jpeg, image/png"
+                onChange={handleFileUpload}
               />
-              <p className="mt-1 text-sm text-gray-800" id="file_input2">
+              <p className="mt-1 text-sm text-gray-800">
                 PNG, JPG (MAX. 800x400px).
               </p>
             </div>
             <div>
               <label
                 className="block mb-2 text-sm font-medium text-gray-900"
-                htmlFor="file_input3"
+                htmlFor="imgOthers"
               >
                 (Optional) Solo Parent/Senior Citizen/IPs/PWD
               </label>
               <input
                 className="block text-sm text-gray-900 border border-gray-400 cursor-pointer bg-gray-50 focus:outline-none"
-                aria-describedby="file_input3"
-                id="file_input3"
+                aria-describedby="imgOthers"
+                id="imgOthers"
                 type="file"
                 name="imgOthers"
-                accept=".jpeg, .png"
+                accept="image/jpeg, image/png"
+                onChange={handleFileUpload}
               />
-              <p className="mt-1 text-sm text-gray-800" id="file_input3">
+              <p className="mt-1 text-sm text-gray-800">
                 PNG, JPG (MAX. 800x400px).
               </p>
             </div>
 
             <div>
               <label
-                htmlFor="selectGrade"
+                htmlFor="grades"
                 className="block mb-2 text-sm font-medium text-gray-500"
               >
-                Select Average Grade
+                *Select Average Grade
               </label>
               <select
-                id="selectGrade"
+                id="grades"
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
                 name="grades"
                 value={formData.grades}
                 onChange={handleChange}
-                required
               >
                 <option value="">Choose Gross Income</option>
                 {grade?.map((grade) => (
@@ -1387,30 +1320,40 @@ const Forms = ({ app_id }) => {
               </select>
             </div>
           </div>
-
-          <div className="absolute right-0">
-            <button
-              type="button"
-              className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center mr-2"
-              onClick={() => toggle("2")}
-            >
-              <svg
-                className="w-5 h-5"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 14 10"
-                transform="scale(-1, 1)"
+          {openAlert && <AlertBox setOpenAlert={setOpenAlert} />}
+          <div className="absolute right-0 flex items-center">
+            <div>
+              <button
+                type="button"
+                className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center mr-2"
+                onClick={() => toggle("2")}
               >
-                <path
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M1 5h12m0 0L9 1m4 4L9 9"
-                />
-              </svg>
-            </button>
+                <svg
+                  className="w-5 h-5"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 14 10"
+                  transform="scale(-1, 1)"
+                >
+                  <path
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M1 5h12m0 0L9 1m4 4L9 9"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div>
+              <button
+                type="submit"
+                className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm p-2.5 text-center inline-flex items-center mr-2"
+              >
+                SUBMIT
+              </button>
+            </div>
           </div>
         </div>
       </form>

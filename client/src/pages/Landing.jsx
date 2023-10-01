@@ -1,14 +1,14 @@
-
-import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import Card from "../components/Card.jsx";
+import { useContext } from "react";
+import { AuthContext } from "../context/authContext.jsx";
 
 const Homepage = () => {
+  const { duration } = useContext(AuthContext);
   return (
     <div>
-      <Link to="/needtoknow">
-        <Card />
+      <Link to="/h/needtoknow">
+        <Card duration={duration} />
       </Link>
     </div>
   );

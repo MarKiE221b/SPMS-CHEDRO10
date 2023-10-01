@@ -19,19 +19,7 @@ import { AuthContext } from "./context/authContext.jsx";
 
 
 function App() {
-  const {currentUser} = useContext(AuthContext);
-
-  const ProtectedLayout = () =>{
-    return(
-      <>
-        <Navbar />
-        <div className="flex items-center justify-center border h-[70vh] md:min-h-screen border-gray-200 rounded-lg shadow-lg m-7 p-7">
-          <Outlet />
-        </div>
-        <Footer />
-      </>
-    )
-  }
+  const {currentUser, duration} = useContext(AuthContext);
 
   const Layout = () =>{
     return(
@@ -53,20 +41,51 @@ function App() {
     return children;
   }
 
+  const ProtectedApplication = ({children}) => {
+    if (!duration) {
+      return <Navigate to="/" />;
+    }
+  
+    return children;
+  }
+
   
   const router = createBrowserRouter([
     {
       path: "/auth",
       element: (
         <ProtectedRoute>
-          <ProtectedLayout />
+          <Layout />
         </ProtectedRoute>
       ),
       children:[
         {
-          path: "/auth/users/:id",
+          path: "/auth/user",
           element: <Users />
-        }
+        },
+      ]
+    },
+
+    {
+      path: "/h",
+      element: (
+        <ProtectedApplication>
+          <Layout />
+        </ProtectedApplication>
+      ),
+      children: [
+        { 
+          path: "/h/needtoknow",
+          element: <NeedToKnow/>
+        },
+        { 
+          path: "/h/terms",
+          element: <Terms />
+        },
+        { 
+          path: "/h/application",
+          element: <Application />
+        },
       ]
     },
     
@@ -78,11 +97,7 @@ function App() {
           path: "/",
           element: <Homepage />
         },
-        
-        {
-          path: "/needtoknow",
-          element: <NeedToKnow />
-        },
+      
         {
           path: "/forget",
           element: <Forget />
@@ -90,14 +105,6 @@ function App() {
         {
           path: "/login",
           element: <Login />
-        },
-        {
-          path: "/terms",
-          element: <Terms />
-        },
-        {
-          path: "/application",
-          element: <Application />
         },
         
       ]

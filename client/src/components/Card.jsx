@@ -1,5 +1,5 @@
 import SchoolIcon from "@mui/icons-material/School";
-const Card = () => {
+const Card = ({ duration }) => {
   return (
     <div className="max-w-sm p-6 bg-white border border-gray-200 rounded-lg shadow-lg hover:bg-gray-300 cursor-pointer">
       <div className="flex flex-col items-center text-center mb-2 ">
@@ -9,8 +9,14 @@ const Card = () => {
         <span className="text-2xl font-bold font-roboto text-blue-400">
           APPLICATION IS NOW
         </span>
-        <span className="h-[35px] w-[200px] pt-1 mt-[5px] rounded-full bg-green-100 text-xl text-green-400">
-          AVAILABLE
+        <span
+          className={
+            duration
+              ? "h-[35px] w-[200px] pt-1 mt-[5px] rounded-full bg-green-100 text-xl text-green-400"
+              : "h-[35px] w-[200px] pt-1 mt-[5px] rounded-full bg-red-100 text-xl text-red-700"
+          }
+        >
+          {duration ? "AVAILABLE" : "UNAVAILABLE"}
         </span>
       </div>
       <div className="pt-5 text-justify font-sans max-h-[260px] overflow-y-auto">

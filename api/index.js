@@ -11,18 +11,22 @@ import dotenv from "dotenv";
 
 
 //middlewares
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", true);
+  next();
+});
+
 app.use(express.json());
 app.use(cookieParser());
 dotenv.config();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173"],
-    methods: ["POST", "GET"],
+    origin: "http://localhost:5173",
+    methods: "POST,GET",
     credentials: true
   })
 );
-
 
 
 app.use("/api/auth", authRoutes);

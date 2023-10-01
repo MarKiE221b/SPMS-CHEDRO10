@@ -1,18 +1,24 @@
+import { useContext } from "react";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../context/authContext";
 
 const NeedToKnow = () => {
+  const { duration } = useContext(AuthContext);
   return (
     <div className="flex flex-col items-center md:mx-12 p-10 bg-white border border-gray-300 rounded-lg shadow-xl max-h-full overflow-y-auto">
       <div className="text-center text-blue-900 font-bold font-roboto text-3xl mb-4">
         <h1>APPLICANTS NEEDS TO KNOW!</h1>
       </div>
+
       <div className="max-w-full text-justify">
-        <p className="mb-4">
-          The CHED Scholarship Program (CSP) is officially{" "}
-          <span className="font-bold text-green-500">OPEN</span> for application
-          for the Academic Year 2023-2024. The following are the important
-          things that student-applicants need to know:
-        </p>
+        {duration.map((dur) => (
+          <p key={dur.appDuration_id} className="mb-4">
+            The CHED Scholarship Program (CSP) is officially{" "}
+            <span className="font-bold text-green-500">OPEN</span> for
+            application for the Academic Year {dur.school_year}. The following
+            are the important things that student-applicants need to know:
+          </p>
+        ))}
         <h1 className="font-bold">
           A. ON THE MINUMUM GENERAL WEIGHTED AVERAGE(GWA)
         </h1>
@@ -249,7 +255,7 @@ const NeedToKnow = () => {
         </p>
       </div>
       <div>
-        <Link to="/terms">
+        <Link to="/h/terms">
           <button
             type="button"
             className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-2xl text-sm px-5 py-2.5 mr-2 mb-2 focus:outline-none"
