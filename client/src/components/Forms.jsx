@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import CircularProgress from "@mui/material/CircularProgress";
 import {
   GenderItem,
   CivilStatusItem,
@@ -11,72 +12,30 @@ import {
   getIncome,
   getGrade,
 } from "../data/ItemData";
-import { FormValidation } from "../functions/FormValidation";
+import { FormValidation, FileValidation } from "../validation/FormValidation";
 import AlertBox from "./AlertBox";
-import CircularProgress from "@mui/material/CircularProgress";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { updateFormData, selectFormData } from "../redux/formSlice";
+import {
+  setIsChecked,
+  setOpenAlert,
+  setOpenDialog,
+  setToggleState,
+  selectUiState,
+} from "../redux/uiSlice";
+import { updateFileData, selectFileData } from "../redux/fileSlice";
+import { selectDuration } from "../redux/durationSlice";
+import DialogBox from "./DialogBox";
 
-const Forms = ({ app_id }) => {
-  const [formData, setFormData] = useState({
-    appDuration: app_id,
-    lName: "",
-    fName: "",
-    mName: "",
-    maidName: "",
-    placeBirth: "",
-    birthday: "",
-    sex: "",
-    civilStatus: "",
-    mobile: "",
-    email: "",
-    provCode: "",
-    cityCode: "",
-    barangayCode: "",
-    zipCode: "",
-    permanentAddr: "",
-    currentAddr: "",
-    schoolLast: "",
-    schoolLastAddr: "",
-    schoolSector: "",
-    attGrade: "",
-    groupPeople: "",
-    specifyGroup: "",
-    schoolIntend: "",
-    degreeProg: "",
-    edAssist: "",
-    edAssistAdd: "",
-    fatName: "",
-    fAddr: "",
-    fContact: "",
-    fOccupation: "",
-    fEmpName: "",
-    fEmpAddr: "",
-    fEdAtt: "",
-    matName: "",
-    mAddr: "",
-    mContact: "",
-    mOccupation: "",
-    mEmpName: "",
-    mEmpAddr: "",
-    mEdAtt: "",
-    gadName: "",
-    gAddr: "",
-    gContact: "",
-    gOccupation: "",
-    gEmpName: "",
-    gEmpAddr: "",
-    gEdAtt: "",
-    income: "",
-    siblings: "",
-    DSWD: "",
-    grades: "",
-  });
+const Forms = () => {
+  const tabPaneRef = useRef(null);
+  const dispatch = useDispatch();
 
-  const [fileUpload, setFileUpload] = useState({
-    imgGrades: null,
-    imgFinance: null,
-    imgOthers: null,
-  });
+  const duration = useSelector(selectDuration);
+  const formData = useSelector(selectFormData);
+  const fileData = useSelector(selectFileData);
+  const { isChecked, toggleState } =
+    useSelector(selectUiState);
 
   const provinces = getProvince();
   const cities = getCity(formData.provCode);
@@ -85,63 +44,62 @@ const Forms = ({ app_id }) => {
   const income = getIncome();
   const grade = getGrade();
 
-  const tabPaneRef = useRef(null);
-
-  const [isChecked, setIsChecked] = useState(false);
-  const [openAlert, setOpenAlert] = useState(false);
-  const [toggleState, setToggleState] = useState("1");
-
   const toggle = (index) => {
-    setToggleState(index);
-    tabPaneRef.current.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleFileUpload = (e) => {
-    const { name, files } = e.target;
-    setFileUpload({ ...fileUpload, [name]: files[0] });
+    dispatch(setToggleState(index));
+    tabPaneRef.current.scrollIntoView({ behavior: "auto" });
   };
 
   //submit data
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    if (FormValidation(formData) === true) {
-      try {
-        await axios.post(
-          "http://localhost:8800/api/application/applicant",
-          formData
-        );
-      } catch (err) {
-        console.log(err.response.data);
-      }
-    } else {
-      setOpenAlert(true);
+
+    dispatch(updateFormData({ appDuration: duration[0].appDuration_id }));
+
+    if (!FormValidation(formData) || !FileValidation(fileData)) {
+      dispatch(setOpenAlert(true));
+      return;
     }
+
+    dispatch(setOpenDialog(true));
   };
 
   const handleCheckBox = () => {
-    setIsChecked(!isChecked);
+    dispatch(setIsChecked(!isChecked));
     if (!isChecked) {
-      setFormData({ ...formData, currentAddr: formData.permanentAddr });
-    } else {
-      setFormData({ ...formData, currentAddr: "" });
+      dispatch(updateFormData({ currentAddr: formData.permanentAddr }));
     }
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    dispatch(updateFormData({ [name]: value }));
+  };
+
+  const handleFileUpload = (e) => {
+    const { name, files } = e.target;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Image = reader.result;
+
+      dispatch(updateFileData({ [name]: base64Image }));
+    };
+
+    if (files && files[0]) {
+      reader.readAsDataURL(files[0]);
+    }
   };
 
   if (provinces.status === "loading") return <CircularProgress />;
   return (
     <>
+      <DialogBox />
       <div ref={tabPaneRef} className="text-2xl font-bold text-center">
         APPLICATION FORM
       </div>
-      <div className="mt-3 text-red-600 text-sm">
+      <div className="mt-3 text-red-600 text-base">
         <p>
-          Instructions: Fill in all the information. Do not leave an item blank.
-          If item is not applicable, indicate "N/A".
+          Instructions: Fill in all the information. Do not leave any item
+          blank. If an item is not applicable, indicate 'N/A'.
         </p>
       </div>
 
@@ -1127,7 +1085,10 @@ const Forms = ({ app_id }) => {
               >
                 <option value="">Choose Gross Income</option>
                 {income?.map((income) => (
-                  <option key={income.income_id} value={income.equiv_points}>
+                  <option
+                    key={income.income_id}
+                    value={[income.equiv_points, income.range_value]}
+                  >
                     {income.range_value}
                   </option>
                 ))}
@@ -1251,9 +1212,7 @@ const Forms = ({ app_id }) => {
                 accept="image/jpeg, image/png"
                 onChange={handleFileUpload}
               />
-              <p className="mt-1 text-sm text-gray-800">
-                PNG, JPG (MAX. 800x400px).
-              </p>
+              <p className="mt-1 text-sm text-gray-800">PNG, JPG.</p>
             </div>
             <div>
               <label
@@ -1272,9 +1231,7 @@ const Forms = ({ app_id }) => {
                 accept="image/jpeg, image/png"
                 onChange={handleFileUpload}
               />
-              <p className="mt-1 text-sm text-gray-800">
-                PNG, JPG (MAX. 800x400px).
-              </p>
+              <p className="mt-1 text-sm text-gray-800">PNG, JPG.</p>
             </div>
             <div>
               <label
@@ -1292,9 +1249,7 @@ const Forms = ({ app_id }) => {
                 accept="image/jpeg, image/png"
                 onChange={handleFileUpload}
               />
-              <p className="mt-1 text-sm text-gray-800">
-                PNG, JPG (MAX. 800x400px).
-              </p>
+              <p className="mt-1 text-sm text-gray-800">PNG, JPG.</p>
             </div>
 
             <div>
@@ -1311,16 +1266,19 @@ const Forms = ({ app_id }) => {
                 value={formData.grades}
                 onChange={handleChange}
               >
-                <option value="">Choose Gross Income</option>
+                <option value="">Choose Average Grade</option>
                 {grade?.map((grade) => (
-                  <option key={grade.grade_id} value={grade.equiv_points}>
+                  <option
+                    key={grade.grade_id}
+                    value={[grade.equiv_points, grade.range_value]}
+                  >
                     {grade.range_value}
                   </option>
                 ))}
               </select>
             </div>
           </div>
-          {openAlert && <AlertBox setOpenAlert={setOpenAlert} />}
+          <AlertBox />
           <div className="absolute right-0 flex items-center">
             <div>
               <button

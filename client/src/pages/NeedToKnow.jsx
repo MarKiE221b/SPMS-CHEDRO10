@@ -1,33 +1,32 @@
-import { useContext } from "react";
 import { Link } from "react-router-dom";
-import { AuthContext } from "../context/authContext";
+import { useSelector } from "react-redux";
+import { selectDuration } from "../redux/durationSlice";
 
 const NeedToKnow = () => {
-  const { duration } = useContext(AuthContext);
+  const duration = useSelector(selectDuration);
   return (
     <div className="flex flex-col items-center md:mx-12 p-10 bg-white border border-gray-300 rounded-lg shadow-xl max-h-full overflow-y-auto">
       <div className="text-center text-blue-900 font-bold font-roboto text-3xl mb-4">
-        <h1>APPLICANTS NEEDS TO KNOW!</h1>
+        <h1>APPLICANTS NEED TO KNOW!</h1>
       </div>
 
       <div className="max-w-full text-justify">
-        {duration.map((dur) => (
-          <p key={dur.appDuration_id} className="mb-4">
-            The CHED Scholarship Program (CSP) is officially{" "}
-            <span className="font-bold text-green-500">OPEN</span> for
-            application for the Academic Year {dur.school_year}. The following
-            are the important things that student-applicants need to know:
-          </p>
-        ))}
-        <h1 className="font-bold">
+        <p className="mb-4">
+          The CHED Scholarship Program (CSP) is officially{" "}
+          <span className="font-bold text-green-500">OPEN</span> for
+          applications for the Academic Year {duration[0].school_year}. The
+          following are the important things that student-applicants need to
+          know :
+        </p>
+        <h1 className="font-bold mb-2">
           A. ON THE MINUMUM GENERAL WEIGHTED AVERAGE(GWA)
         </h1>
-        <p className="mb-4">
-          <span className="font-bold">
+        <p className="ml-10 mb-4">
+          <span className="font-bold italic">
             Student-applicants must be incoming freshmen/first year students
           </span>{" "}
           who are eligible for enrollment in college,{" "}
-          <span className="font-bold">
+          <span className="font-bold italic">
             with at least 96% or its equivalent for the Full Merit Program and
             93% to 95% or its equivalent for the Half Merit Program
           </span>{" "}
@@ -36,12 +35,14 @@ const NeedToKnow = () => {
           (SUC's)/or accredited Local Universities and Colleges (LUC's) with
           Certificates of Program Compliance (COPC).
         </p>
-        <h1 className="font-bold">B. ELIGIBILITY REQUIREMENTS</h1>
-        <span className="mb-4">
-          Student-applicants must comply with the following requirements for the
-          scholarship grant and be uploaded to the student-applicant designated
-          portal account preferably in PDF format:
-          <ul className="list-decimal list-inside space-y-4">
+        <h1 className="font-bold mb-2">B. ELIGIBILITY REQUIREMENTS</h1>
+        <div className="ml-10 mb-4 space-y-3">
+          <p>
+            Student-applicants must comply with the following requirements for
+            the scholarship grant and be uploaded to the student-applicant
+            designated portal account preferably in PDF format:
+          </p>
+          <ul className="list-decimal list-inside space-y-4 ml-5">
             <li>
               Certified true copy of Birth Certificate as proof of Filipino
               citizenship;
@@ -71,7 +72,7 @@ const NeedToKnow = () => {
             </li>
             <li>
               Must submit ANY of the following:
-              <ul className="list-disc list-inside space-y-1">
+              <ul className="list-disc list-inside space-y-2 ml-5">
                 <li>Latest Income Tax Return (ITR) of parents or guardian;</li>
                 <li>
                   Certificate of Tax Exemption from the Bureau of Internal
@@ -90,17 +91,19 @@ const NeedToKnow = () => {
               </ul>
             </li>
           </ul>
-        </span>
-        <h1 className="font-bold">C. FINANCIAL ASSISTANCE</h1>
-        <p className="mb-4">
-          The financial assistance will cover the tuition and other school fees
-          (TOSF), stipends, and book/connectivity allowances per semester which
-          will be released directly to the scholars through the HEI
-        </p>
-        <p className="mb-4">
-          Below is the list of the financial packages for the Full and Half
-          Merit Scholars:
-        </p>
+        </div>
+        <h1 className="font-bold mb-2">C. FINANCIAL ASSISTANCE</h1>
+        <div className="ml-10">
+          <p className="mb-4">
+            The financial assistance will cover the tuition and other school
+            fees (TOSF), stipends, and book/connectivity allowances per semester
+            which will be released directly to the scholars through the HEI
+          </p>
+          <p className="mb-4 italic">
+            Below is the list of the financial packages for the Full and Half
+            Merit Scholars:
+          </p>
+        </div>
         <div className="mb-4">
           <h1 className="font-bold">PRIVATE HEI'S</h1>
           <div className="relative overflow-x-auto">
@@ -137,17 +140,17 @@ const NeedToKnow = () => {
                     Full PESFA
                   </th>
                   <td>Annual</td>
-                  <td>40,000</td>
-                  <td>70,000</td>
-                  <td>10,000</td>
-                  <td>120,000</td>
+                  <td>₱40,000.00</td>
+                  <td>₱70,000.00</td>
+                  <td>₱10,000.00</td>
+                  <td>₱120,000.00</td>
                 </tr>
                 <tr className="border-b">
                   <td>Semestral</td>
-                  <td>20,000</td>
-                  <td>35,000</td>
-                  <td>5,000</td>
-                  <td>60,000</td>
+                  <td>₱20,000.00</td>
+                  <td>₱35,000.00</td>
+                  <td>₱5,000.00</td>
+                  <td>₱60,000.00</td>
                 </tr>
                 <tr className="bg-white border-b">
                   <th
@@ -158,17 +161,17 @@ const NeedToKnow = () => {
                     Half PESFA
                   </th>
                   <td>Annual</td>
-                  <td>20,000</td>
-                  <td>35,000</td>
-                  <td>5,000</td>
-                  <td>60,000</td>
+                  <td>₱20,000.00</td>
+                  <td>₱35,000.00</td>
+                  <td>₱5,000.00</td>
+                  <td>₱60,000.00</td>
                 </tr>
                 <tr className="border-b">
                   <td>Semestral</td>
-                  <td>10,000</td>
-                  <td>17,500</td>
-                  <td>2,500</td>
-                  <td>30,000</td>
+                  <td>₱10,000.00</td>
+                  <td>₱17,500.00</td>
+                  <td>₱2,500.00</td>
+                  <td>₱30,000.00</td>
                 </tr>
               </tbody>
             </table>
@@ -211,16 +214,16 @@ const NeedToKnow = () => {
                   </th>
                   <td>Annual</td>
                   <td>FREE</td>
-                  <td>70,000</td>
-                  <td>10,000</td>
-                  <td>80,000</td>
+                  <td>₱70,000.00</td>
+                  <td>₱10,000.00</td>
+                  <td>₱80,000.00</td>
                 </tr>
                 <tr className="border-b">
                   <td>Semestral</td>
                   <td>FREE</td>
-                  <td>35,000</td>
-                  <td>5,000</td>
-                  <td>40,000</td>
+                  <td>₱35,000.00</td>
+                  <td>₱5,000.00</td>
+                  <td>₱40,000.00</td>
                 </tr>
                 <tr className="bg-white border-b">
                   <th
@@ -232,24 +235,24 @@ const NeedToKnow = () => {
                   </th>
                   <td>Annual</td>
                   <td>FREE</td>
-                  <td>35,000</td>
-                  <td>5,000</td>
-                  <td>40,000</td>
+                  <td>₱35,000.00</td>
+                  <td>₱5,000.00</td>
+                  <td>₱40,000.00</td>
                 </tr>
                 <tr className="border-b">
                   <td>Semestral</td>
                   <td>FREE</td>
-                  <td>17,500</td>
-                  <td>2,500</td>
-                  <td>20,000</td>
+                  <td>₱17,500.00</td>
+                  <td>₱2,500.00</td>
+                  <td>₱20,000.00</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        <h1 className="font-bold">D. AVAILMENT OF SLOTS</h1>
-        <p className="mb-4">
+        <h1 className="font-bold mb-2">D. AVAILMENT OF SLOTS</h1>
+        <p className="mb-4 ml-10">
           The availment of the type of scholarships is determined through
           ranking system and availability of slots.
         </p>

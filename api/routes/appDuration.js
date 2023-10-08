@@ -3,6 +3,6 @@ import { getDuration } from "../controllers/appDuration.js";
 
 const router = express.Router()
 
-router.get("/appDur", getDuration)
+router.get("/duration", getDuration)
 
 export default router

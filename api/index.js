@@ -32,8 +32,8 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/hei", heiRoutes);
 app.use("/api/points", rankPointsRoutes);
-app.use("/api/duration", appDurationRoutes);
-app.use("/api/application" ,applicantRoutes);
+app.use("/api/", appDurationRoutes);
+app.use("/api/" ,applicantRoutes);
 
 app.listen(8800, () => {
     console.log("API working!");

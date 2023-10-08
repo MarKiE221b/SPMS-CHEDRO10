@@ -3,7 +3,7 @@ import {
   Navigate,
   Outlet,
   RouterProvider,
-} from "react-router-dom";  
+} from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
 import Footer from "./components/Footer.jsx";
 import Homepage from "./pages/Landing.jsx";
@@ -16,13 +16,16 @@ import Terms from "./pages/Terms.jsx";
 import Application from "./pages/Application.jsx";
 import { useContext } from "react";
 import { AuthContext } from "./context/authContext.jsx";
-
+import { selectDuration } from "./redux/durationSlice.js";
+import { useSelector } from "react-redux";
 
 function App() {
-  const {currentUser, duration} = useContext(AuthContext);
+  const duration = useSelector(selectDuration);
 
-  const Layout = () =>{
-    return(
+  const { currentUser } = useContext(AuthContext);
+
+  const Layout = () => {
+    return (
       <>
         <Navbar />
         <div className="flex items-center justify-center h-screen m-4">
@@ -30,26 +33,25 @@ function App() {
         </div>
         <Footer />
       </>
-    )
-  }
-  
-  const ProtectedRoute = ({children}) => {
+    );
+  };
+
+  const ProtectedRoute = ({ children }) => {
     if (!currentUser) {
       return <Navigate to="/login" />;
     }
-  
-    return children;
-  }
 
-  const ProtectedApplication = ({children}) => {
+    return children;
+  };
+
+  const ProtectedApplication = ({ children }) => {
     if (!duration) {
       return <Navigate to="/" />;
     }
-  
-    return children;
-  }
 
-  
+    return children;
+  };
+
   const router = createBrowserRouter([
     {
       path: "/auth",
@@ -58,12 +60,12 @@ function App() {
           <Layout />
         </ProtectedRoute>
       ),
-      children:[
+      children: [
         {
           path: "/auth/user",
-          element: <Users />
+          element: <Users />,
         },
-      ]
+      ],
     },
 
     {
@@ -74,56 +76,52 @@ function App() {
         </ProtectedApplication>
       ),
       children: [
-        { 
+        {
           path: "/h/needtoknow",
-          element: <NeedToKnow/>
+          element: <NeedToKnow />,
         },
-        { 
+        {
           path: "/h/terms",
-          element: <Terms />
+          element: <Terms />,
         },
-        { 
+        {
           path: "/h/application",
-          element: <Application />
+          element: <Application />,
         },
-      ]
+      ],
     },
-    
+
     {
       path: "/",
       element: <Layout />,
       children: [
         {
           path: "/",
-          element: <Homepage />
+          element: <Homepage />,
         },
-      
+
         {
           path: "/forget",
-          element: <Forget />
+          element: <Forget />,
         },
         {
           path: "/login",
-          element: <Login />
+          element: <Login />,
         },
-        
-      ]
+      ],
     },
-    
+
     {
       path: "*",
-      element: <Page404 />
-    }
-    
-    
+      element: <Page404 />,
+    },
   ]);
 
   return (
     <div>
-      <RouterProvider router={router}/>
+      <RouterProvider router={router} />
     </div>
-  )
+  );
 }
 
-
-export default App
+export default App;

@@ -1,15 +1,14 @@
-import { useContext } from "react";
 import Forms from "../components/Forms";
-import { AuthContext } from "../context/authContext";
+import Confirmation from "../components/Confirmation";
+import { useSelector } from "react-redux";
+import { selectUiState } from "../redux/uiSlice";
 
 const Application = () => {
-  const { duration } = useContext(AuthContext);
+  const { agreeDialog } = useSelector(selectUiState);
 
   return (
     <div className="flex flex-col m-6 p-10 bg-white border border-gray-300 rounded-lg shadow-xl max-h-full overflow-y-auto">
-      {duration?.map((dur) => (
-        <Forms key={dur.appDuration_id} app_id={dur.appDuration_id} />
-      ))}
+      {agreeDialog ? <Confirmation /> : <Forms />}
     </div>
   );
 };

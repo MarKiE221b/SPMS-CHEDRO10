@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import Card from "../components/Card.jsx";
-import { useContext } from "react";
-import { AuthContext } from "../context/authContext.jsx";
+import { useSelector } from "react-redux";
+import { selectDuration } from "../redux/durationSlice.js";
 
 const Homepage = () => {
-  const { duration } = useContext(AuthContext);
+  const duration = useSelector(selectDuration);
+  
   return (
     <div>
       <Link to="/h/needtoknow">

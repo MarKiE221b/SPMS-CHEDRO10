@@ -35,6 +35,13 @@ export const FormValidation = (formData) => {
     "grades",
   ];
   return requiredFields.every(
-    (field) => formData[field] && formData[field].trim() !== ""
+    (field) => formData[field] && formData[field] !== ""
+  );
+};
+
+export const FileValidation = (fileData) => {
+  const requiredFields = ["imgGrades", "imgFinance"];
+  return requiredFields.every(
+    (field) => fileData[field] && fileData[field] !== ""
   );
 };

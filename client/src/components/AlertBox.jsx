@@ -1,39 +1,35 @@
 import { Alert, Box, Collapse, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { useEffect } from "react";
+import { selectUiState, setOpenAlert } from "../redux/uiSlice";
+import { useDispatch, useSelector } from "react-redux";
 
-const AlertBox = ({ setOpenAlert }) => {
+const AlertBox = () => {
+  const dispatch = useDispatch();
+  const { openAlert } = useSelector(selectUiState);
 
-  useEffect(()=>{
-    const timerDuration = 5000;
-    const timer = setTimeout(()=>{
-      setOpenAlert(false);
-    }, timerDuration)
-
-    return()=>{clearTimeout(timer)};
-  },[])
-  
   return (
     <Box sx={{ width: "100%" }}>
-      <Alert
-        variant="outlined"
-        severity="error"
-        action={
-          <IconButton
-            aria-label="close"
-            color="error"
-            size="small"
-            onClick={() => {
-              setOpenAlert(false);
-            }}
-          >
-            <CloseIcon fontSize="inherit" />
-          </IconButton>
-        }
-        sx={{ mb: 2 }}
-      >
-        REQUIRED ITEMS MUST BE FILLED OUT! PLEASE GO BACK!
-      </Alert>
+      <Collapse in={openAlert}>
+        <Alert
+          variant="outlined"
+          severity="error"
+          action={
+            <IconButton
+              aria-label="close"
+              color="error"
+              size="small"
+              onClick={() => {
+                dispatch(setOpenAlert(false));
+              }}
+            >
+              <CloseIcon fontSize="inherit" />
+            </IconButton>
+          }
+          sx={{ mb: 2 }}
+        >
+          REQUIRED ITEMS MUST BE FILLED OUT! PLEASE GO BACK!
+        </Alert>
+      </Collapse>
     </Box>
   );
 };

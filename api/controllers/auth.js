@@ -52,15 +52,3 @@ export const getTokenData = (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("accessToken").status(200).json(null);
 };
-
-export const getDuration = (req, res)=>{
-  const q = "SELECT * FROM `application_duration`"
-
-  db.query(q, (err, data) => {
-    if (err) return res.status(500).json(err);
-    if (data.length === 0) return res.status(404).json("Application Duration Not Found!");
-
-    res.status(200).json(data[0])
-  })
-
-}
