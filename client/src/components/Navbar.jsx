@@ -20,7 +20,7 @@ const handleLogout = () => {
   return (
     <div className="h-20 w-full bg-blue-900 flex justify-between items-center p-4 top-0" >
       <div className="flex items-center">
-        <NavLink to="/">
+        <NavLink to="/" reloadDocument>
           <div className="h-16 w-16">
             <img src={CHED_logo} alt="CHED_LOGO" />
           </div>

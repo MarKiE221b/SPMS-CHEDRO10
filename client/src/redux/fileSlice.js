@@ -1,9 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-  imgGrades: "",
-  imgFinance: "",
-  imgOthers: "",
+  imgGrades: null,
+  imgFinance: null,
+  imgOthers: null,
 };
 
 const fileSlice = createSlice({

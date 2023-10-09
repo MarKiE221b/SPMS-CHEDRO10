@@ -34,8 +34,7 @@ const Forms = () => {
   const duration = useSelector(selectDuration);
   const formData = useSelector(selectFormData);
   const fileData = useSelector(selectFileData);
-  const { isChecked, toggleState } =
-    useSelector(selectUiState);
+  const { isChecked, toggleState } = useSelector(selectUiState);
 
   const provinces = getProvince();
   const cities = getCity(formData.provCode);

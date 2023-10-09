@@ -8,6 +8,9 @@ export function appendDataToFormData(formData, fileData) {
 
   // Append fileData keys and values to data under "files" key
   Object.entries(fileData).forEach(([key, value]) => {
+    if (!value) {
+      return;
+    }
     const filename = generateUniqueFilename();
     const image = decode64Image(value);
 
@@ -17,16 +20,13 @@ export function appendDataToFormData(formData, fileData) {
   return data;
 }
 function decode64Image(value) {
-  const base64String = value
-    .split(",")[1]
-    .replace(/-/g, "+")
-    .replace(/_/g, "/"); // Retrieve the base64 encoded image from Redux state
+  const base64String = value.split(",")[1]; // Retrieve the base64 encoded image from Redux state
+  console.log(base64String);
   const binaryString = atob(base64String);
   const uint8Array = new Uint8Array(binaryString.length);
   for (let i = 0; i < binaryString.length; i++) {
     uint8Array[i] = binaryString.charCodeAt(i);
   }
-
   const blob = new Blob([uint8Array], { type: "image/png" });
   return blob;
 }

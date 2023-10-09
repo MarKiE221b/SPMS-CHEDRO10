@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import approvedGIF from "../assets/approved.gif";
 import { makeRequest } from "../axios";
 import { useQuery } from "react-query";
@@ -25,6 +24,8 @@ const Confirmation = () => {
       staleTime: Infinity,
     }
   );
+
+  console.log(data);
 
   if (status === "loading") return <CircularProgress />;
   return (

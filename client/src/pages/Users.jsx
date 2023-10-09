@@ -1,7 +1,5 @@
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import PrintIcon from "@mui/icons-material/Print";
-import { useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 
 const Users = () => {
   return (

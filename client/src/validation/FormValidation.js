@@ -42,6 +42,6 @@ export const FormValidation = (formData) => {
 export const FileValidation = (fileData) => {
   const requiredFields = ["imgGrades", "imgFinance"];
   return requiredFields.every(
-    (field) => fileData[field] && fileData[field] !== ""
+    (field) => fileData[field] && fileData[field] !== null
   );
 };
