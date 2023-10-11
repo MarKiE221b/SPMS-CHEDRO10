@@ -5,6 +5,8 @@ const initialState = {
   openAlert: false,
   openDialog: false,
   agreeDialog: false,
+  indexMenu: 0,
+  subIndexMenu: 0,
   toggleState: "1",
 };
 
@@ -27,6 +29,12 @@ const uiSlice = createSlice({
     setAgreeDialog: (state, action) => {
       state.agreeDialog = action.payload;
     },
+    setIndexMenu: (state, action) => {
+      state.indexMenu = action.payload;
+    },
+    setSubIndexMenu: (state, action) => {
+      state.subIndexMenu = action.payload;
+    },
   },
 });
 
@@ -36,6 +44,8 @@ export const {
   setOpenDialog,
   setToggleState,
   setAgreeDialog,
+  setIndexMenu,
+  setSubIndexMenu,
 } = uiSlice.actions;
 export const selectUiState = (state) => state.ui;
 export default uiSlice.reducer;

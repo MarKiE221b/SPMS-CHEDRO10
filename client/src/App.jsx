@@ -12,17 +12,16 @@ import NeedToKnow from "./pages/NeedToKnow.jsx";
 import Forget from "./pages/Forget.jsx";
 import Page404 from "./pages/Page404.jsx";
 import Users from "./pages/Users.jsx";
+import Admin from "./pages/CHED_ADMIN/Admin.jsx";
 import Terms from "./pages/Terms.jsx";
 import Application from "./pages/Application.jsx";
-import { useContext } from "react";
-import { AuthContext } from "./context/authContext.jsx";
 import { selectDuration } from "./redux/durationSlice.js";
 import { useSelector } from "react-redux";
+import { selectAuth } from "./redux/authSlice.js";
 
 function App() {
   const duration = useSelector(selectDuration);
-
-  const { currentUser } = useContext(AuthContext);
+  const auth = useSelector(selectAuth);
 
   const Layout = () => {
     return (
@@ -36,14 +35,6 @@ function App() {
     );
   };
 
-  const ProtectedRoute = ({ children }) => {
-    if (!currentUser) {
-      return <Navigate to="/login" />;
-    }
-
-    return children;
-  };
-
   const ProtectedApplication = ({ children }) => {
     if (!duration) {
       return <Navigate to="/" />;
@@ -52,18 +43,31 @@ function App() {
     return children;
   };
 
+  const ProtectedAuth = ({ children }) => {
+    if (!auth) {
+      console.log(auth);
+      return <Navigate to="/login" />;
+    }
+    return children;
+  };
+
   const router = createBrowserRouter([
     {
       path: "/auth",
       element: (
-        <ProtectedRoute>
-          <Layout />
-        </ProtectedRoute>
+        <ProtectedAuth>
+          <Outlet />
+        </ProtectedAuth>
       ),
+
       children: [
         {
           path: "/auth/user",
           element: <Users />,
+        },
+        {
+          path: "/auth/admin",
+          element: <Admin />,
         },
       ],
     },

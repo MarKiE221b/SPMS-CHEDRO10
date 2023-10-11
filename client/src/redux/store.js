@@ -3,6 +3,7 @@ import formReducer from "./formSlice";
 import uiReducer from "./uiSlice";
 import fileReducer from "./fileSlice";
 import durationReducer from "./durationSlice";
+import authReducer from "./authSlice"
 import { fetchDuration } from "./durationActions";
 
 export const store = configureStore({
@@ -11,6 +12,7 @@ export const store = configureStore({
     ui: uiReducer,
     fileData: fileReducer,
     duration: durationReducer,
+    auth: authReducer,
   },
 });
 

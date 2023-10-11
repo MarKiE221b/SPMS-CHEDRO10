@@ -1,29 +1,25 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext } from "react";
 import { makeRequest } from "../axios";
+import { useDispatch } from "react-redux";
+import { setAuth } from "../redux/authSlice";
 
 export const AuthContext = createContext();
 
 export const AuthContextProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(
-    JSON.parse(localStorage.getItem("Access")) || null
-  );
+  const dispatch = useDispatch();
 
   const login = async (inputs) => {
     const res = await makeRequest.post("/auth/login", inputs);
-    setCurrentUser(res.data);
+    dispatch(setAuth(res.data.others));
   };
 
   const logout = async () => {
     const res = await makeRequest.get("/auth/logout");
-    setCurrentUser(null);
+    dispatch(setAuth(null));
   };
 
-  useEffect(() => {
-    localStorage.setItem("Access", JSON.stringify(currentUser));
-  }, []);
-
   return (
-    <AuthContext.Provider value={{ currentUser, login, logout }}>
+    <AuthContext.Provider value={{ login, logout }}>
       {children}
     </AuthContext.Provider>
   );
